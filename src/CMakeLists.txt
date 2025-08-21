@@ -5,6 +5,7 @@ list(APPEND PUBLIC_HEADER_FILES
   ${INCLUDE_DIR}/vapi.h
   ${INCLUDE_DIR}/vutils.h
   ${INCLUDE_DIR}/vultra.h
+  ${INCLUDE_DIR}/vvul.h
 )
 
 list(APPEND PRIVATE_HEADER_FILES

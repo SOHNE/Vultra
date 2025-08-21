@@ -40,7 +40,8 @@
 
 #include "vcore_context.h"
 
-#include <math.h>
+#define VVUL_IMPLEMENTATION
+#include "vultra/vvul.h"
 
 //--------------------------------------------------------------------------------------------------------------
 // GLOBALS
@@ -61,6 +62,7 @@ InitWindow( int width, int height, const char * title )
 {
     TRACELOG( LOG_INFO, "Initializing Vultra - %s", VULTRA_VERSION );
 
+    // Initialize window data
     core.window.screen.height = (unsigned int)height;
     core.window.screen.width  = (unsigned int)width;
     if( STR_NONEMPTY( title ) )
@@ -71,11 +73,16 @@ InitWindow( int width, int height, const char * title )
     TRACELOG( LOG_INFO, "Initializing window: %s (%dx%d)", core.window.title, core.window.screen.width,
               core.window.screen.height );
 
+    // Initialize platform
+    //--------------------------------------------------------------
     if( 0 != InitPlatform() )
         {
             TRACELOG( LOG_WARNING, "SYSTEM: Failed to initialize Platform" );
             return;
         }
+    //--------------------------------------------------------------
+
+    vInit( core.window.screen.width, core.window.screen.height );
 
     TRACELOG( LOG_INFO, "Window initialized successfully" );
 }
