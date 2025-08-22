@@ -33,7 +33,7 @@
 //----------------------------------------------------------------------------------------------------------------------
 // Module Declaration
 //----------------------------------------------------------------------------------------------------------------------
-void SetLogLevel( int logType );                       // Set a minimum log level
+void SetTraceLogLevel( int logType );                  // Set a minimum log level
 void TraceLog( int logLevel, const char * text, ... ); // Display a log message
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ SetTraceLogCallback( TraceLogCallback callback )
 //----------------------------------------------------------------------------------------------------------------------
 // Set a minimum log level
 void
-SetLogLevel( int logType )
+SetTraceLogLevel( int logType )
 {
     logLevel = logType;
 }

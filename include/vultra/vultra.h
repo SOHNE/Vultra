@@ -331,6 +331,7 @@ VAPI void EndDrawing( void );
 // Miscellaneous core functions
 VAPI void SetTraceLogCallback( TraceLogCallback callback ); // Set custom trace log
 VAPI void TraceLog( int logLevel, const char * text, ... ); // Display a log message
+VAPI void SetTraceLogLevel( int logLevel );
 
 VAPI void PollInputEvents( void );
 
