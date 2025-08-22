@@ -32,6 +32,9 @@ static PlatformContext platform = { 0 };
 int  InitPlatform( void );
 void ClosePlatform( void );
 
+// Get all the required extensions for Vulkan instance
+const char ** ExtensionCallback( uint32_t * count );
+
 extern void SignalClose( void );
 
 // Getters
@@ -153,6 +156,13 @@ INLINE void
 SignalClose( void )
 {
     glfwSetWindowShouldClose( platform.handle, GLFW_TRUE );
+}
+
+// Get all the required extensions for Vulkan instance
+const char **
+ExtensionCallback( uint32_t * count )
+{
+    return glfwGetRequiredInstanceExtensions( count );
 }
 
 INLINE bool

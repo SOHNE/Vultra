@@ -54,6 +54,12 @@ CoreContext core = { 0 };
 extern int  InitPlatform( void );
 extern void ClosePlatform( void );
 
+// Get all the required extensions for Vulkan instance
+extern const char ** ExtensionCallback( uint32_t * count );
+
+// Initialize the Graphics backend
+static void InitGraphicsAPI( void );
+
 //--------------------------------------------------------------------------------------------------------------
 // MODULE FUNCTIONS DEFINITONS
 //--------------------------------------------------------------------------------------------------------------
@@ -77,12 +83,13 @@ InitWindow( int width, int height, const char * title )
     //--------------------------------------------------------------
     if( 0 != InitPlatform() )
         {
-            TRACELOG( LOG_WARNING, "SYSTEM: Failed to initialize Platform" );
+            TRACELOG( LOG_FATAL, "SYSTEM: Failed to initialize Platform" );
             return;
         }
-    //--------------------------------------------------------------
 
-    vInit( core.window.screen.width, core.window.screen.height );
+    // Initialize graphics backend
+    //--------------------------------------------------------------
+    InitGraphicsAPI();
 
     TRACELOG( LOG_INFO, "Window initialized successfully" );
 }
@@ -90,6 +97,8 @@ InitWindow( int width, int height, const char * title )
 void
 CloseWindow( void )
 {
+    vClose();
+
     ClosePlatform();
 
     TRACELOG( LOG_INFO, "Window closed" );
@@ -147,4 +156,21 @@ GetFPS( void )
 {
     NO_IMPL();
     return 0;
+}
+
+//----------------------------------------------------------------------------------
+// MODULE FUNCTIONS DEFINITION: GRAPHICS API
+//----------------------------------------------------------------------------------
+
+// Initialize the Graphics backend
+
+INLINE void
+InitGraphicsAPI( void )
+{
+    // TODO: Implement a StringArray for management
+    // TODO: Add additional extensions in the API interface
+    uint32_t      extensionCount = 0;
+    const char ** extensions     = ExtensionCallback( &extensionCount );
+
+    vInit( extensions, extensionCount );
 }

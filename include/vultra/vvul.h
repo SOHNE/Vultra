@@ -31,16 +31,19 @@
 #ifndef VVUL_H
 #define VVUL_H
 
-/* Version: YY.MINOR.MICRO */
-#define VVUL_VERSION "25.0.0"
-
 #include "vultra/vapi.h"
+#include "vultra/vversion.h"
 
 #include <stdlib.h> /* malloc(), free() */
+#include <string.h> /* strcmp(), strlen() */
+
+#include <vulkan/vulkan.h>
 
 //----------------------------------------------------------------------------------------------------------------------
 // Module Defines and Macros
 //----------------------------------------------------------------------------------------------------------------------
+#define VULTRA_VK_VERSION VK_MAKE_VERSION( VULTRA_VERSION_MAJOR, VULTRA_VERSION_MINOR, VULTRA_VERSION_PATCH )
+
 #ifndef VAPI
 #    define VAPI
 #endif
@@ -49,11 +52,19 @@
 #    define INLINE inline
 #endif
 
+#ifndef VUL_ARRAYSIZE
+#    define VUL_ARRAYSIZE( a ) ( (int)( sizeof( a ) / sizeof( *( a ) ) ) )
+#endif
+
+#ifndef UNUSED
+#    define UNUSED( x ) (void)( x )
+#endif
+
 // C++ compatibility, preventing name mangling
 #if defined( __cplusplus )
 /* clang-format off */
-#    define CXX_GUARD_START extern "C" {
-#    define CXX_GUARD_END   }
+#   define CXX_GUARD_START extern "C" {
+#   define CXX_GUARD_END   }
 /* clang-format on */
 #else
 #    define CXX_GUARD_START
@@ -96,18 +107,24 @@
 // Current vvul State and Configs
 typedef struct vvulContext
 {
-    // ...
+    struct
+    {
+        VkInstance handle;
+
+    } Instance;
+
 } vvulContext;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------------------------------------------
-
-static vvulContext vState = {};
+static vvulContext vState = { 0 };
 
 //----------------------------------------------------------------------------------------------------------------------
 // Module Specific Functions Declarations
 //----------------------------------------------------------------------------------------------------------------------
+static INLINE const char * VkResultToStr( VkResult err );
+static INLINE bool         vCreateInstance( const char ** requiredExtensions, uint32_t extensionCount );
 
 //----------------------------------------------------------------------------------------------------------------------
 // Module Functions Declarations
@@ -117,8 +134,8 @@ static vvulContext vState = {};
 CXX_GUARD_START
 //
 
-VAPI void vInit( int width, int height ); // Initialize Vulkan devices and states
-VAPI void vClose( void );                 // Deinitialize Vulkan
+VAPI void vInit( const char ** requiredExtensions, uint32_t extensionCount );
+VAPI void vClose( void ); // Deinitialize Vulkan
 
 //
 CXX_GUARD_END
@@ -132,13 +149,98 @@ CXX_GUARD_END
 #ifdef VVUL_IMPLEMENTATION
 
 INLINE void
-vInit( int width, int height )
+vInit( const char ** requiredExtensions, uint32_t extensionCount )
 {
+    // Instance
+    //----------------------------------------------------------
+    if( !vCreateInstance( requiredExtensions, extensionCount ) ) return;
 }
 
+// Deinitializes and closes the Vulkan context
 INLINE void
 vClose( void )
 {
+    vkDestroyInstance( vState.Instance.handle, NULL );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+// Module specific Functions Definition
+//----------------------------------------------------------------------------------------------------------------------
+
+static INLINE const char *
+VkResultToStr( VkResult err )
+{
+    switch( err )
+        {
+#    define STR( R )                                                                                                   \
+    case VK_##R: return #R
+            STR( SUCCESS );
+            STR( NOT_READY );
+            STR( TIMEOUT );
+            STR( EVENT_SET );
+            STR( EVENT_RESET );
+            STR( INCOMPLETE );
+            STR( ERROR_OUT_OF_HOST_MEMORY );
+            STR( ERROR_OUT_OF_DEVICE_MEMORY );
+            STR( ERROR_INITIALIZATION_FAILED );
+            STR( ERROR_DEVICE_LOST );
+            STR( ERROR_MEMORY_MAP_FAILED );
+            STR( ERROR_LAYER_NOT_PRESENT );
+            STR( ERROR_EXTENSION_NOT_PRESENT );
+            STR( ERROR_FEATURE_NOT_PRESENT );
+            STR( ERROR_INCOMPATIBLE_DRIVER );
+            STR( ERROR_TOO_MANY_OBJECTS );
+            STR( ERROR_FORMAT_NOT_SUPPORTED );
+            STR( ERROR_SURFACE_LOST_KHR );
+            STR( SUBOPTIMAL_KHR );
+            STR( ERROR_OUT_OF_DATE_KHR );
+            STR( ERROR_INCOMPATIBLE_DISPLAY_KHR );
+            STR( ERROR_NATIVE_WINDOW_IN_USE_KHR );
+            STR( ERROR_VALIDATION_FAILED_EXT );
+#    undef STR
+        default: return "UNKNOWN_RESULT";
+        }
+}
+
+// Create Vulkan instance
+static INLINE bool
+vCreateInstance( const char ** extensions, uint32_t extensionCount )
+{
+    VkApplicationInfo    appInfo    = { 0 };
+    VkInstanceCreateInfo createInfo = { 0 };
+    VkResult             result;
+
+    // Application Info
+    {
+        appInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pApplicationName   = "Vultra Application";
+        appInfo.applicationVersion = VK_MAKE_VERSION( 1, 0, 0 );
+        appInfo.pEngineName        = "Vultra";
+        appInfo.engineVersion      = VULTRA_VK_VERSION;
+        appInfo.apiVersion         = VK_API_VERSION_1_0;
+    }
+
+    // Instance Create Info
+    {
+        createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo        = &appInfo;
+
+        createInfo.enabledExtensionCount   = extensionCount;
+        createInfo.ppEnabledExtensionNames = extensions;
+
+        // TODO: Implement valiantion layers
+        createInfo.enabledLayerCount       = 0;
+        createInfo.ppEnabledLayerNames     = NULL;
+    }
+
+    result = vkCreateInstance( &createInfo, NULL, &vState.Instance.handle );
+    if( VK_SUCCESS != result )
+        {
+            TRACELOG( LOG_FATAL, "VVUL: Failed to create Vulkan instance: %s", VkResultToStr( result ) );
+            return false;
+        }
+
+    return true;
 }
 
 #endif // VVUL_IMPLEMENTATION
